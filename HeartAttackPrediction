@@ -1,0 +1,221 @@
+#%%
+import matplotlib.pyplot as plt
+import pandas as pd
+import seaborn as sns
+import numpy as np
+%matplotlib inline
+sns.set_style("whitegrid")
+plt.style.use("fivethirtyeight")
+bankdata = pd.read_csv("dataset.csv")
+bankdata.info()
+bankdata.head()
+
+bankdata.shape
+pd.set_option("display.float", "{:.2f}".format)
+bankdata.describe()
+bankdata.target.value_counts()
+bankdata.target.value_counts().plot(kind="bar", color=["salmon", "lightblue"])
+bankdata.isna().sum()
+categorical_val = []
+continous_val = []
+for column in bankdata.columns:
+    print('==============================')
+    print(f"{column} : {bankdata[column].unique()}")
+    if len(bankdata[column].unique()) <= 10:
+        categorical_val.append(column)
+    else:
+        continous_val.append(column)
+
+
+
+categorical_val.remove('target')
+bankdata2 = pd.get_dummies(bankdata, columns = categorical_val)
+#bankdata2.head()
+#print(bankdata.columns)
+#print(bankdata2.columns)
+
+#%%
+def draw_histograms(dataframe, features, rows, cols):
+    fig=plt.figure(figsize=(20,20))
+    for i, feature in enumerate(features):
+        ax=fig.add_subplot(rows,cols,i+1)
+        dataframe[feature].hist(bins=20,ax=ax,facecolor='midnightblue')
+        ax.set_title(feature+" Distribution",color='DarkRed')
+        
+    fig.tight_layout()  
+    plt.show()
+draw_histograms(bankdata,bankdata.columns,6,3)
+
+#
+from sklearn.preprocessing import StandardScaler
+
+s_sc = StandardScaler()
+col_to_scale = ['age', 'restingbps', 'cholesterol', 'maxheartrate', 'oldpeak']
+bankdata2[col_to_scale] = s_sc.fit_transform(bankdata2[col_to_scale])
+
+from sklearn.metrics import accuracy_score, confusion_matrix, classification_report
+
+
+bankdata2 = bankdata2.dropna()
+X = bankdata2.drop('target', axis=1)
+Y = bankdata2.target
+
+
+
+from sklearn.model_selection import train_test_split, RepeatedKFold
+
+X_train, X_test, Y_train, Y_test = train_test_split(X, Y, test_size=0.20, random_state= 204)
+from sklearn.svm import SVC
+svclassifier = SVC(kernel='rbf', gamma=0.75, C=10.0)
+svclassifier.fit(X_train, Y_train)
+SVC(kernel='rbf', gamma=0.75, C=10.0)
+y_pred = svclassifier.predict(X_test)
+print("\n")
+print("                                      SVM                                       ")
+print(confusion_matrix(Y_test, y_pred))
+print(classification_report(Y_test, y_pred))
+
+test_score = accuracy_score(Y_test, svclassifier.predict(X_test)) * 100
+train_score = accuracy_score(Y_train, svclassifier.predict(X_train)) * 100
+print("Training Accuracy = ",train_score, "%")
+print("Testing Accuracy = ", test_score, "%")
+print("\n")
+print("########################################################################")
+
+
+
+#svm_clf = SVC(kernel='rbf', gamma=0.1, C=1.0)
+
+#params = {"C":(0.1, 0.5, 1, 2, 5, 10, 20), 
+          #"gamma":(0.001, 0.01, 0.1, 0.25, 0.5, 0.75, 1), 
+          #"kernel":('linear', 'poly', 'rbf')}
+from sklearn.ensemble import RandomForestClassifier
+#trees number 
+rf_clf = RandomForestClassifier(n_estimators=100, random_state=42)
+rf_clf.fit(X_train, Y_train)
+y_pred = rf_clf.predict(X_test)
+print("\n")
+print("                                      Random Forest                                       ")
+print(confusion_matrix(Y_test, y_pred))
+print(classification_report(Y_test, y_pred))
+
+test_score = accuracy_score(Y_test, rf_clf.predict(X_test)) * 100
+train_score = accuracy_score(Y_train, rf_clf.predict(X_train)) * 100
+print("Training Accuracy = ",train_score, "%")
+print("Testing Accuracy = ", test_score, "%")
+print("\n")
+print("########################################################################")
+
+
+from sklearn.linear_model import LogisticRegression
+
+lr_clf = LogisticRegression(solver='liblinear')
+lr_clf.fit(X_train, Y_train)
+y_pred=lr_clf.predict(X_test)
+print("\n")
+print("                                     Logistic Regression                                      ")
+print(confusion_matrix(Y_test, y_pred))
+print(classification_report(Y_test, y_pred))
+test_score = accuracy_score(Y_test, lr_clf.predict(X_test)) * 100
+train_score = accuracy_score(Y_train, lr_clf.predict(X_train)) * 100
+print("Training Accuracy = ",train_score, "%")
+print("Testing Accuracy = ", test_score, "%")
+print("\n")
+print("########################################################################")
+
+from sklearn.neighbors import KNeighborsClassifier
+
+knn_clf = KNeighborsClassifier()
+knn_clf.fit(X_train, Y_train)
+y_pred=knn_clf.predict(X_test)
+print("\n")
+print("                                      K-Neighbors                                     ")
+print(confusion_matrix(Y_test, y_pred))
+print(classification_report(Y_test, y_pred))
+test_score = accuracy_score(Y_test, knn_clf.predict(X_test)) * 100
+train_score = accuracy_score(Y_train, knn_clf.predict(X_train)) * 100
+print("Training Accuracy = ",train_score, "%")
+print("Testing Accuracy = ", test_score, "%")
+print("\n")
+print("########################################################################")
+
+from sklearn.tree import DecisionTreeClassifier
+tree_clf = DecisionTreeClassifier(random_state=42)
+tree_clf.fit(X_train, Y_train)
+y_pred=tree_clf.predict(X_test)
+print("\n")
+print("                                      Decision Tree                                     ")
+print(confusion_matrix(Y_test, y_pred))
+print(classification_report(Y_test, y_pred))
+test_score = accuracy_score(Y_test, tree_clf.predict(X_test)) * 100
+train_score = accuracy_score(Y_train, tree_clf.predict(X_train)) * 100
+print("Training Accuracy = ",train_score, "%")
+print("Testing Accuracy = ", test_score, "%")
+print("\n")
+print("########################################################################")
+print("\n")
+
+
+
+from sklearn.neural_network import MLPClassifier
+from sklearn.preprocessing import LabelEncoder , LabelBinarizer, MinMaxScaler, OrdinalEncoder
+from sklearn.multiclass import OneVsRestClassifier
+
+NN = MLPClassifier(solver='lbfgs', alpha=1e-5, hidden_layer_sizes=(5, 2), random_state=1)
+NN.fit(X_train,Y_train)
+y_pred= NN.predict(X_test)
+print("                                      Neural Network                                     ")
+print(confusion_matrix(Y_test, y_pred))
+print(classification_report(Y_test, y_pred))
+
+test_score = accuracy_score(Y_test, NN.predict(X_test)) * 100
+train_score = accuracy_score(Y_train, NN.predict(X_train)) * 100
+print("Training Accuracy = ",train_score, "%")
+print("Testing Accuracy = ", test_score, "%")
+print("\n")
+print("########################################################################")
+print("\n")
+
+
+
+
+
+####################################################
+print("Output Accuracy after applying K-Fold Cross Validation")
+print("\n")
+from numpy import mean
+from  numpy import std
+from sklearn.model_selection import KFold, cross_val_score
+cv=KFold(n_splits= 20, random_state= 1, shuffle= True)
+model = RandomForestClassifier()
+scores = cross_val_score(model, X,Y, scoring= 'accuracy', cv = cv , n_jobs= -1)
+print('Random Forest Accuracy: %.3f'  % (mean (scores)))
+
+
+model = SVC(kernel='rbf', C=1, random_state=42)
+scores = cross_val_score(model, X,Y, scoring= 'accuracy', cv = cv , n_jobs= -1)
+print('SVM  Accuracy: %.3f ' % (mean (scores)))
+
+
+
+model = LogisticRegression(solver='liblinear')
+scores = cross_val_score(model, X,Y, scoring= 'accuracy', cv = cv , n_jobs= -1)
+print('Logistic Regression Accuracy: %.3f ' % (mean (scores) ))
+
+
+
+
+model = MLPClassifier(solver='lbfgs', alpha=1e-5, hidden_layer_sizes=(5, 2), random_state=42)
+scores = cross_val_score(model, X,Y, scoring= 'accuracy', cv = cv , n_jobs= -1)
+print('Neural Network Accuracy: %.3f ' % (mean (scores)))
+
+
+model = DecisionTreeClassifier(random_state=42)
+scores = cross_val_score(model, X,Y, scoring= 'accuracy', cv = cv , n_jobs= -1)
+print('Decision Tree Accuracy: %.3f ' % (mean (scores)))
+
+
+model = KNeighborsClassifier()
+scores = cross_val_score(model, X,Y, scoring= 'accuracy', cv = cv , n_jobs= -1)
+print('KNN Accuracy: %.3f ' % (mean (scores)))
+
